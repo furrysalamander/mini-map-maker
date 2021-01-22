@@ -3,6 +3,7 @@ import sys
 import zipfile
 import wget
 import shutil
+import multiprocessing
 import urllib.request as request
 from contextlib import closing
 import shutil
@@ -27,23 +28,32 @@ def install_lastools():
             zip_ref.extractall("")
         os.remove(file_name)
 
+def get_file_from_url(url, file_name):
+    # This is a pattern you'll see several times.  I don't want to have to
+    # redo the whole process if it fails along the way.
+    if os.path.exists(file_name):
+        print(f"{file_name} downloaded, skipping...")
+        return
+    with closing(request.urlopen(url)) as r:
+        with open(file_name, 'wb') as f:
+            shutil.copyfileobj(r, f)
+    print(f"Downloaded {url}")
+
 def main():
     install_lastools()
     
     # For each tile in the USGS dataset, download the zip
     f = open(sys.argv[1])
+    list_of_urls = []
     list_of_zip = []
     for line in f:
         print(line := line.rstrip('\n'))
         file_name = wget.filename_from_url(line)
         list_of_zip.append(file_name)
-        # This is a pattern you'll see several times.  I don't want to have to
-        # redo the whole process if it fails along the way.
-        if os.path.exists(file_name):
-            continue
-        with closing(request.urlopen(line)) as r:
-            with open(file_name, 'wb') as f:
-                shutil.copyfileobj(r, f)
+        list_of_urls.append(line)
+    
+    with multiprocessing.Pool(5) as p:
+        p.starmap(get_file_from_url, zip(list_of_urls, list_of_zip))
     
     # Unzip each zip file that was downloaded
     list_of_las = []
