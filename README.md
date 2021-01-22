@@ -1,5 +1,7 @@
 # mini-map-maker
-A tool for automating the workflow of converting lidar data from the USGS website into a DEM format that DEMto3D can use
+A tool for automating the workflow of converting lidar data from the USGS website into a DEM format that DEMto3D can use.
+
+In order to make use of the `.asc` file that this script outputs, you will also need to install QGIS and the DEMto3D plugin.
 
 To use this script, go to the USGS LidarExplorer
 
