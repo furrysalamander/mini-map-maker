@@ -9,6 +9,12 @@ Select an area, and then click the "Download list" button under "Lidar within AO
 
 This should give you a file called `downloadlist.txt`.  Simply place this text file in the same directory as the script, and then run the script.
 
-Do note, lastools is not completely free.  This script downloads lastools automatically.  If you are using lastools in a commercial environment, you will need to pay for a license.
+Licensing
+--------
+This tool uses lastools.  Lastools is not completely free.  This script downloads lastools automatically.  If you are using lastools in a commercial environment, you will need to pay for a license.
 
 https://rapidlasso.com/lastools/
+
+Additionally, this script makes use of some public domain utilities from FUSION by the US Forest Service
+
+http://forsys.sefs.uw.edu/FUSION/fusion_overview.html
