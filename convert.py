@@ -70,7 +70,11 @@ def unzip_to_las(file_name, las_name):
     with zipfile.ZipFile(file_name, "r") as zip_ref:
         zip_ref.extractall("LAS")
 
-def generate_dem_from_las(dem_name, las_name):
+def generate_dem_from_las(las_name, dem_name):
+    if os.path.exists(dem_name):
+        print(f'{dem_name} already exists, skipping...')
+        return
+    print(f'Generating {dem_name}')
     os.system(f'{GRID_EXE} {dem_name} {REDUCE_BY} M M 0 0 0 0 {las_name}')
 
 
@@ -114,20 +118,12 @@ def main():
 
     print("\nGenerating .dtm files...\n")
 
-    # Keep a list of the DEM generation processes
-    dem_processes = []
-    with multiprocessing.Pool() as p:
-        for l, d in zip(list_of_las, list_of_dtm):
-            print(d)
-            if os.path.exists(d):
-                continue
-            # If necessary, make sure all las files get combined into one DTM
-            if MERGE_LAS:
-                os.system(f'{GRID_EXE} {d} {REDUCE_BY} M M 0 0 0 0 LAS\\*.las')
-            else:
-                dem_processes.append(p.apply_async(generate_dem_from_las, zip(d, l)))
-        for process in dem_processes:
-            process.wait()
+    # If necessary, make sure all las files get combined into one DTM
+    if MERGE_LAS:
+        os.system(f'{GRID_EXE} {list_of_dtm[0]} {REDUCE_BY} M M 0 0 0 0 LAS\\*.las')
+    else:
+        with multiprocessing.Pool() as p:
+            p.starmap(generate_dem_from_las, zip(list_of_las, list_of_dtm))
 
     if not os.path.exists('ASC'):
         os.mkdir('ASC')
