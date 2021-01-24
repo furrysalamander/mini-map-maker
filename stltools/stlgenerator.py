@@ -1,6 +1,7 @@
 """
 A collection of functions to generate a 3D stl
 model using various data sets.
+https://github.com/r-barnes/DEMto3D
 """
 
 import functools

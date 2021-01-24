@@ -1,6 +1,7 @@
 """
 A collection of methods that will write a single polygonal facet
 to a binary STL file.
+https://github.com/r-barnes/DEMto3D
 """
 
 from struct import pack
