@@ -89,6 +89,9 @@ def main():
 
     list_of_las = [f'LAS\\{x}.las' for x in list_of_files]
 
+    if not os.path.exists('LAS'):
+        os.mkdir('LAS')
+
     with multiprocessing.Pool(16) as p:
         p.starmap(get_file_from_url, zip(list_of_urls, list_of_zip))
         # Unzip each zip file that was downloaded
