@@ -1,3 +1,14 @@
+#
+.idea/
+
+LAStools/
+*.tmp
+*.zip
+ASC/
+LAS/
+DTM/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
