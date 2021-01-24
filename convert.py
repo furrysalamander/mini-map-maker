@@ -25,6 +25,9 @@ MERGE_LAS = False
 # Generate 3D models
 GENERATE_STLS = True
 
+# Delete LAS Directory when finished
+DELETE_LAS = False
+
 # Enabling this option will generate .prj files for each generated .asc file.  This requires blast2dem,
 # a closed source utility that is part of lastools.  If you enable this option, lastools will be automatically
 # downloaded an unzipped, however, the output may not be used for commercial purposes unless you purchase
@@ -141,7 +144,8 @@ def main():
 
     # Delete the directories used for the intermediate steps
     print("Cleaning up...")
-    shutil.rmtree('LAS')
+    if DELETE_LAS:
+        shutil.rmtree('LAS')
     shutil.rmtree('DTM')
 
     if GENERATE_STLS:
