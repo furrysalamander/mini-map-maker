@@ -39,12 +39,12 @@ def gen_stls_from_ascs(list_of_asc: list, list_of_files: list):
     for d in list_of_depth_maps:
         if (tmp := min([r.min() for r in d])) < lowest_value and tmp != -9999:
             lowest_value = tmp
-    if lowest_value != np.inf():
+    if lowest_value != np.inf:
         print(f'Lowest elevation found: {lowest_value}, using for base for all STLs')
     else:
         lowest_value = 0
         print(f'DEM Missing data!  Needs further adjustment.  Setting lowest value to 0.')
-        
+
     if not os.path.exists('STL'):
         os.mkdir('STL')
 
