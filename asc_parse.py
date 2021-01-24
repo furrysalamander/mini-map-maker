@@ -2,6 +2,7 @@ import sys
 import cv2
 import numpy as np
 import os
+import multiprocessing
 from stltools import stlgenerator
 
 def load_asc(file_name: str):
