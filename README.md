@@ -3,8 +3,8 @@
 A tool for automatically generating 3D printable STLs from freely available lidar scan data.
 
 # Screenshots
-![image](screenshots\\dem.png)
-![image](screenshots\\stl.png)
+![image](https://user-images.githubusercontent.com/3507277/105790537-c6ef0c00-5f41-11eb-9156-6089de99e225.png)
+![image](https://user-images.githubusercontent.com/3507277/105790540-c787a280-5f41-11eb-99a3-892778707e48.png)
 # Tutorial
 
 To use this script, go to the USGS LidarExplorer
@@ -12,7 +12,7 @@ To use this script, go to the USGS LidarExplorer
 https://prd-tnm.s3.amazonaws.com/LidarExplorer/index.html#/
 
 Select an area, and then click the "Download list" button under "Lidar within AOI"
-![image](screenshots\\tutorial.png)
+![image](https://user-images.githubusercontent.com/3507277/105790562-cfdfdd80-5f41-11eb-9db7-6bcbc1efe950.png)
 This should give you a file called `downloadlist.txt`. Simply place this text file in the same directory as the script,
 and then run the script (`convert.py`, or `convert.exe` if you don't want to deal with Python).  By default,
 mini-map-maker will generate an STL file for each tile in the lidar data.  However, there are quite a few command line
