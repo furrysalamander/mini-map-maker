@@ -2,22 +2,21 @@ import os
 import sys
 import zipfile
 import asc_parse
-import re
 import wget
-import shutil
 import multiprocessing
 import urllib.request as request
 from contextlib import closing
+import argparse
 import shutil
 
-GRID_EXE = "GridSurfaceCreate64.exe"
-D2A_EXE = "DTM2ASCII.exe"
-LASTOOLS_URL = "http://lastools.github.io/download/LAStools.zip"
-BLAST2DEM_EXE = "LAStools\\bin\\blast2dem.exe"
-LAS2LAS_EXE = "LAStools\\bin\\las2las.exe"
-
 # A decimal value that will decrease the output file size as it increases
-REDUCE_BY = 1.0
+REDUCE_BY = 1.5
+
+# A decimal value that will make artificially make things taller as it increases
+VERTICAL_SCALE = 1.0
+
+# A decimal value that sets the base height of the model
+BASE_HEIGHT = 0.0
 
 # Disable this option if you want to generate a seperate DEM/STL for each LAS tile.
 MERGE_LAS = False
@@ -28,6 +27,8 @@ GENERATE_STLS = True
 # Delete LAS Directory when finished
 DELETE_LAS = False
 
+FILTER_SPIKES = False
+
 # Enabling this option will generate .prj files for each generated .asc file.  This requires blast2dem,
 # a closed source utility that is part of lastools.  If you enable this option, lastools will be automatically
 # downloaded an unzipped, however, the output may not be used for commercial purposes unless you purchase
@@ -36,6 +37,11 @@ DELETE_LAS = False
 # https://lastools.github.io/LICENSE.txt
 QGIS_COMPATIBLE_DEM = False
 
+GRID_EXE = "GridSurfaceCreate64.exe"
+D2A_EXE = "DTM2ASCII.exe"
+LASTOOLS_URL = "http://lastools.github.io/download/LAStools.zip"
+BLAST2DEM_EXE = "LAStools\\bin\\blast2dem.exe"
+LAS2LAS_EXE = "LAStools\\bin\\las2las.exe"
 
 # lastools isn't completely free/open source, so we can't distribute it with the program.
 def install_lastools():
@@ -79,8 +85,44 @@ def generate_dem_from_las(las_name, dem_name):
 
 
 def main():
+    global VERTICAL_SCALE
+    global BASE_HEIGHT
+    global REDUCE_BY
+    global MERGE_LAS
+    global GENERATE_STLS
+    global DELETE_LAS
+    global FILTER_SPIKES
+    global QGIS_COMPATIBLE_DEM
+    global GRID_EXE
+
+    parser = argparse.ArgumentParser(description='')
+    # Just in case the user doesn't pass in the file name, assume it's what the USGS names it.
+    parser.add_argument('--input', '-i', type=str, default='downloadlist.txt', help='')
+    parser.add_argument('--reduce', '-r', type=float, default=REDUCE_BY, help='')
+    parser.add_argument('--vscale', '-v', type=float, default=VERTICAL_SCALE, help='')
+    parser.add_argument('--base', '-b', type=float, default=BASE_HEIGHT, help='')
+    parser.add_argument('--merge', '-m', action='store_true', help='')
+    parser.add_argument('--no_stl', '-s', action='store_false', help='')
+    parser.add_argument('--cleanup', '-c', action='store_true', help='')
+    parser.add_argument('--filter', '-f', type=float, default=False, help='')
+    parser.add_argument('--prj', '-p', action='store_true', help='')
+    #parser.add_argument('--help', '-h', action='help')
+
+    args = parser.parse_args()
+
+    VERTICAL_SCALE = args.vscale
+    BASE_HEIGHT = args.base
+    REDUCE_BY = args.reduce
+    MERGE_LAS = args.merge
+    GENERATE_STLS = args.no_stl
+    DELETE_LAS = args.cleanup
+    QGIS_COMPATIBLE_DEM=args.prj
+
+    if args.filter:
+        GRID_EXE += f' /spike:{args.filter}'
+
     # For each tile in the USGS dataset, download the zip
-    f = open(sys.argv[1])
+    f = open(args.input)
     list_of_urls = []
     list_of_zip = []
 
@@ -146,20 +188,23 @@ def main():
             os.system(f'{BLAST2DEM_EXE} -i {l} -oasc')
             shutil.copy(p, 'ASC')
 
+    if GENERATE_STLS:
+        asc_parse.gen_stls_from_ascs(
+            list_of_asc=list_of_asc,
+            list_of_files=list_of_files,
+            scale_adjustment=REDUCE_BY,
+            vscale=VERTICAL_SCALE,
+            base=BASE_HEIGHT,
+        )
+
     # Delete the directories used for the intermediate steps
     print("Cleaning up...")
     if DELETE_LAS:
         shutil.rmtree('LAS')
     shutil.rmtree('DTM')
 
-    if GENERATE_STLS:
-        asc_parse.gen_stls_from_ascs(list_of_asc, list_of_files)
-
 if __name__ == "__main__":
     if sys.platform.startswith('win'):
         # On Windows calling this function is necessary.
         multiprocessing.freeze_support()
-    # Just in case the user doesn't pass in the file name, assume it's what the USGS names it.
-    sys.argv.append('downloadlist.txt')
-    # sys.argv.append('downloadlist2.txt')
     main()

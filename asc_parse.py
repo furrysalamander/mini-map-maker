@@ -18,21 +18,7 @@ def load_asc(file_name: str):
     data = cv2.flip(data, 0)
     return data
 
-
-def gen_stl_from_asc(file_name: str):
-    data = load_asc(file_name)
-
-    stlgenerator.generate_from_heightmap_array(
-        data,
-        destination=file_name.rstrip('.asc')+'.stl',
-        hsep=0,
-        sep_dep=0,
-        tab_size=0,
-        tab_dep=0,
-        anchorsize=0,
-    )
-
-def gen_stls_from_ascs(list_of_asc: list, list_of_files: list):
+def gen_stls_from_ascs(list_of_asc: list, list_of_files: list, scale_adjustment = 1.0, vscale = 1.0, base = 0.0):
     # This is a bit inefficient IMO, but it's important in order
     # to ensure that we generate all stl files with a uniform height
     list_of_depth_maps = [load_asc(x) for x in list_of_asc]
@@ -61,15 +47,12 @@ def gen_stls_from_ascs(list_of_asc: list, list_of_files: list):
             tab_dep=0,
             anchorsize=0,
             hmin=lowest_value,
+            vsize=1/np.sqrt(scale_adjustment+0.5),
         )
 
 
 def main():
-    gen_stl_from_asc(sys.argv[1])
     return
 
-
 if __name__ == "__main__":
-    #sys.argv.append("test2.asc")
-    sys.argv.append("ASC\\USGS_LPC_UT_WasatchFault_L3_2013_12TVK4400055000_LAS_2016.asc")
     main()

@@ -41,11 +41,11 @@ def generate_from_heightmap_array(heightmap, destination, hsize=1, vsize=1, base
 
     hmin = hmin or min([hm.min() for hm in heightmap])
     hmax = hmax or max([hm.max() for hm in heightmap])
-
+    vsize /= 750
     heightmap       -= hmin                                              #Set base elevation to 0
-    heightmap       *= vsize/hmax                                        #Convert heightmap from input units to output units
+    heightmap       *= vsize#/hmax                                        #Convert heightmap from input units to output units
     heightmap       += base                                              #Add the indicated amount of base (in output units)
-    h_scale          = hsize/heightmap[0].shape[1]                       #Find the horizontal scale
+    h_scale = hsize/min((heightmap[0].shape[1], heightmap[0].shape[0]))  #Find the horizontal scale
     tab_size         = math.ceil(tab_size/h_scale)                       #Convert tab size from output units to cells
     separation_array = np.zeros(shape=(1,heightmap[0].shape[1]))+sep_dep #Separation array equal to width of piece set to sep_dep height
     separation_array[0,0:tab_size] = tab_dep                             #Add tabs
