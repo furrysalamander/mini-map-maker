@@ -10,7 +10,7 @@ import argparse
 import shutil
 
 # A decimal value that will decrease the output file size as it increases
-REDUCE_BY = 1.5
+REDUCE_BY = 1.0
 
 # A decimal value that will make artificially make things taller as it increases
 VERTICAL_SCALE = 1.0
