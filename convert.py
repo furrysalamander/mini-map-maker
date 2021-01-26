@@ -95,17 +95,17 @@ def main():
     global QGIS_COMPATIBLE_DEM
     global GRID_EXE
 
-    parser = argparse.ArgumentParser(description='')
+    parser = argparse.ArgumentParser(description='A utility for automatically generating 3D printable STLs from USGS lidar scans.')
     # Just in case the user doesn't pass in the file name, assume it's what the USGS names it.
-    parser.add_argument('--input', '-i', type=str, default='downloadlist.txt', help='')
-    parser.add_argument('--reduce', '-r', type=float, default=REDUCE_BY, help='')
-    parser.add_argument('--vscale', '-v', type=float, default=VERTICAL_SCALE, help='')
-    parser.add_argument('--base', '-b', type=float, default=BASE_HEIGHT, help='')
-    parser.add_argument('--merge', '-m', action='store_true', help='')
-    parser.add_argument('--no_stl', '-s', action='store_false', help='')
-    parser.add_argument('--cleanup', '-c', action='store_true', help='')
-    parser.add_argument('--filter', '-f', type=float, default=False, help='')
-    parser.add_argument('--prj', '-p', action='store_true', help='')
+    parser.add_argument('--input', '-i', type=str, default='downloadlist.txt', help='The name of the file containing the URLs of all of the lidar scan data.')
+    parser.add_argument('--reduce', '-r', type=float, default=REDUCE_BY, help='A decimal value that will decrease the output file size as it increases.  The default value is 1.0')
+    parser.add_argument('--vscale', '-v', type=float, default=VERTICAL_SCALE, help='A decimal value that will make artificially make things taller as it increases.  The default value is 1.0')
+    parser.add_argument('--base', '-b', type=float, default=BASE_HEIGHT, help='A decimal value that sets the base height of the model.  The default value is 0.0')
+    parser.add_argument('--merge', '-m', action='store_true', help='Using this flag will merge all of the point clouds into one file before converting into a DEM.')
+    parser.add_argument('--no_stl', '-s', action='store_false', help='Using this flag will disable STL generation.')
+    parser.add_argument('--cleanup', '-c', action='store_true', help='Using this flag will cause the program to automatically delete the unzipped point cloud files after running.')
+    parser.add_argument('--filter', '-f', type=float, default=False, help='A percent value (0-100, for the slope of the points being smoothed) that will enable the spike smoothing option.  This is good if you have points that are floating way up above the model and causing spikes in your final model.')
+    parser.add_argument('--prj', '-p', action='store_true', help='Using this flag will cause the program to automatically download and use lastools to generate projection files for the elevation models.  This is important if you want to generate the STLs yourself in QGIS, but it means you\'ll have to be mindful of lastool\'s license limitations.  More info on lastool\'s website.')
     #parser.add_argument('--help', '-h', action='help')
 
     args = parser.parse_args()
