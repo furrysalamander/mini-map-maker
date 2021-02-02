@@ -60,6 +60,11 @@ optional arguments:
                         More info on lastool's website (https://rapidlasso.com/lastools/).
 ```
 
+# Support This Project
+Like this project?  Feel free to make a donation.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L3L63ISSH)
+
 
 Licensing
 --------
