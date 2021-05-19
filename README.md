@@ -64,14 +64,14 @@ optional arguments:
 ```
 
 ## Additional Examples:
-###External Files
+### External Files
 Let's say you already have some las files you want to use.  Simply place them into a directory called LAS, and then call
 the script from from the directory containing the LAS folder, using the `--external_files` flag, like so:
 
 `convert.py --external_files`
 
 This trick also works with LAZ files, or even a mix of LAZ and LAS files.  
-###Adding a Base and Manipulating the Output
+### Adding a Base and Manipulating the Output
 For one project, I had a LAZ file that had a section of ocean.  This caused the output to be super flat, and too thin
 in several places to print well.  Additionally, it was a pretty high resolution file, so the output STL was very large,
 and I wasn't happy with the vertical scale of the file either.  So, after placing my LAZ file into a directory labeled
