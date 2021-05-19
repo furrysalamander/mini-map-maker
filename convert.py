@@ -8,6 +8,7 @@ import urllib.request as request
 from contextlib import closing
 import argparse
 import shutil
+import glob
 
 # A decimal value that will decrease the output file size as it increases
 REDUCE_BY = 1.0
@@ -37,11 +38,14 @@ FILTER_SPIKES = False
 # https://lastools.github.io/LICENSE.txt
 QGIS_COMPATIBLE_DEM = False
 
-GRID_EXE = "GridSurfaceCreate64.exe"
-D2A_EXE = "DTM2ASCII.exe"
+SCRIPT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+
+GRID_EXE = os.path.join(SCRIPT_DIRECTORY, "GridSurfaceCreate64.exe")
+D2A_EXE = os.path.join(SCRIPT_DIRECTORY, "DTM2ASCII.exe")
+LASZIP_EXE = os.path.join(SCRIPT_DIRECTORY, "laszip-cli.exe")
 LASTOOLS_URL = "http://lastools.github.io/download/LAStools.zip"
-BLAST2DEM_EXE = "LAStools\\bin\\blast2dem.exe"
-LAS2LAS_EXE = "LAStools\\bin\\las2las.exe"
+BLAST2DEM_EXE = os.path.join(SCRIPT_DIRECTORY, "LAStools\\bin\\blast2dem.exe")
+LAS2LAS_EXE = os.path.join(SCRIPT_DIRECTORY, "LAStools\\bin\\las2las.exe")
 
 # lastools isn't completely free/open source, so we can't distribute it with the program.
 def install_lastools():
@@ -76,12 +80,21 @@ def unzip_to_las(file_name, las_name):
     with zipfile.ZipFile(file_name, "r") as zip_ref:
         zip_ref.extractall("LAS")
 
+
 def generate_dem_from_las(las_name, dem_name):
     if os.path.exists(dem_name):
         print(f'{dem_name} already exists, skipping...')
         return
     print(f'Generating {dem_name}')
     os.system(f'{GRID_EXE} {dem_name} {REDUCE_BY} M M 0 0 0 0 {las_name}')
+
+
+def unzip_laz_file(laz_name, las_name):
+    if os.path.exists(laz_name):
+        print(f'{laz_name} already exists, skipping...')
+        return
+    print(f'Unzipping {laz_name} to {las_name}')
+    os.system(f'{LASZIP_EXE} -i {laz_name} -o {las_name}')
 
 
 def main():
@@ -106,6 +119,7 @@ def main():
     parser.add_argument('--cleanup', '-c', action='store_true', help='Using this flag will cause the program to automatically delete the unzipped point cloud files after running.')
     parser.add_argument('--filter', '-f', type=float, default=False, help='A percent value (0-100, for the slope of the points being smoothed) that will enable the spike smoothing option.  This is good if you have points that are floating way up above the model and causing spikes in your final model.')
     parser.add_argument('--prj', '-p', action='store_true', help='Using this flag will cause the program to automatically download and use lastools to generate projection files for the elevation models.  This is important if you want to generate the STLs yourself in QGIS, but it means you\'ll have to be mindful of lastool\'s license limitations.  More info on lastool\'s website.')
+    parser.add_argument('--custom_las', action='store_true', default=False, help='Using this flag will use a pre-provided set of las files in the LAS directory.')
     #parser.add_argument('--help', '-h', action='help')
 
     args = parser.parse_args()
@@ -127,27 +141,39 @@ def main():
     list_of_zip = []
 
     # TODO check if first line is a URL or not
+    if args.custom_las:
+        list_of_las = list(glob.glob('LAS\\*.las'))
+        list_of_files = [x.removesuffix('.las') for x in list_of_las]
+    else:
+        for line in f:
+            if not line.rstrip('\n').endswith('.zip'):
+                continue
+            print(line := line.rstrip('\n'))
+            file_name = wget.filename_from_url(line)
+            list_of_zip.append(file_name)
+            list_of_urls.append(line)
 
-    for line in f:
-        if not line.rstrip('\n').endswith('.zip'):
-            continue
-        print(line := line.rstrip('\n'))
-        file_name = wget.filename_from_url(line)
-        list_of_zip.append(file_name)
-        list_of_urls.append(line)
+        # This is the definitive list of all file names for each phase of the pipeline from here out.
+        list_of_files = [x.removesuffix('.zip') for x in list_of_zip]
 
-    # This is the definitive list of all file names for each phase of the pipeline from here out.
-    list_of_files = [x.removesuffix('.zip') for x in list_of_zip]
+        list_of_las = [f'LAS\\{x}.las' for x in list_of_files]
 
-    list_of_las = [f'LAS\\{x}.las' for x in list_of_files]
+        if not os.path.exists('LAS'):
+            os.mkdir('LAS')
 
-    if not os.path.exists('LAS'):
-        os.mkdir('LAS')
+        with multiprocessing.Pool(16) as p:
+            p.starmap(get_file_from_url, zip(list_of_urls, list_of_zip))
+            # Unzip each zip file that was downloaded
+            p.starmap(unzip_to_las, zip(list_of_zip, list_of_las))
 
-    with multiprocessing.Pool(16) as p:
-        p.starmap(get_file_from_url, zip(list_of_urls, list_of_zip))
-        # Unzip each zip file that was downloaded
-        p.starmap(unzip_to_las, zip(list_of_zip, list_of_las))
+    list_of_laz = list(glob.glob('LAS\\*.laz'))
+
+    if list_of_laz:
+        print("LAZ files detected, unzipping...")
+        with multiprocessing.Pool(16) as p:
+            p.starmap(unzip_laz_file, zip(list_of_laz, [x.removesuffix('.laz') + 'las' for x in list_of_las]))
+        list_of_las = list(glob.glob('LAS\\*.las'))
+
 
     if MERGE_LAS:
         list_of_files = [list_of_files[0]]
