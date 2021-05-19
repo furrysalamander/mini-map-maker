@@ -58,7 +58,29 @@ optional arguments:
                         projection files for the elevation models. This is important if you want to generate the STLs
                         yourself in QGIS, but it means you'll have to be mindful of lastool's license limitations.
                         More info on lastool's website (https://rapidlasso.com/lastools/).
+                        
+  --external_files, -e  Using this flag will grab las/laz files from the LAS directory instead of downloading them from
+                        an input list.
 ```
+
+## Additional Examples:
+###External Files
+Let's say you already have some las files you want to use.  Simply place them into a directory called LAS, and then call
+the script from from the directory containing the LAS folder, using the `--external_files` flag, like so:
+
+`convert.py --external_files`
+
+This trick also works with LAZ files, or even a mix of LAZ and LAS files.  
+###Adding a Base and Manipulating the Output
+For one project, I had a LAZ file that had a section of ocean.  This caused the output to be super flat, and too thin
+in several places to print well.  Additionally, it was a pretty high resolution file, so the output STL was very large,
+and I wasn't happy with the vertical scale of the file either.  So, after placing my LAZ file into a directory labeled
+LAS like mentioned above, I used the following command:
+
+`convert.py --external_files --filter 50 --base 10 --vscale 0.5 --reduce 2`
+
+Filtering got rid of some weird spikes in the output STL, and the `base` command increased the total height of the output.
+The `vscale` command made the model shorter, and `reduce` significantly decreased the size of the STL. 
 
 # Support This Project
 Like this project?  Feel free to make a donation.
@@ -83,3 +105,8 @@ https://rapidlasso.com/lastools/
 Additionally, this script makes use of some public domain utilities from FUSION by the US Forest Service
 
 http://forsys.sefs.uw.edu/FUSION/fusion_overview.html
+
+With the addition of LAZ processing, this project now utilizes LASzip, an LGPL-2.1 tool.  It is included as a
+precompiled binary (laszip-cli.exe), and no modifications have been made.
+
+https://github.com/LASzip/LASzip

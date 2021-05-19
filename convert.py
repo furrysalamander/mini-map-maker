@@ -28,8 +28,6 @@ GENERATE_STLS = True
 # Delete LAS Directory when finished
 DELETE_LAS = False
 
-FILTER_SPIKES = False
-
 # Enabling this option will generate .prj files for each generated .asc file.  This requires blast2dem,
 # a closed source utility that is part of lastools.  If you enable this option, lastools will be automatically
 # downloaded an unzipped, however, the output may not be used for commercial purposes unless you purchase
@@ -81,17 +79,20 @@ def unzip_to_las(file_name, las_name):
         zip_ref.extractall("LAS")
 
 
-def generate_dem_from_las(las_name, dem_name):
+def generate_dem_from_las(las_name, dem_name, filter: float = None, reduce_by: float = 1.0):
+    global GRID_EXE
+    if filter:
+        GRID_EXE += f' /spike:{filter}'
     if os.path.exists(dem_name):
         print(f'{dem_name} already exists, skipping...')
         return
     print(f'Generating {dem_name}')
-    os.system(f'{GRID_EXE} {dem_name} {REDUCE_BY} M M 0 0 0 0 {las_name}')
+    os.system(f'{GRID_EXE} {dem_name} {reduce_by} M M 0 0 0 0 {las_name}')
 
 
 def unzip_laz_file(laz_name, las_name):
-    if os.path.exists(laz_name):
-        print(f'{laz_name} already exists, skipping...')
+    if os.path.exists(las_name):
+        print(f'{las_name} already exists, skipping...')
         return
     print(f'Unzipping {laz_name} to {las_name}')
     os.system(f'{LASZIP_EXE} -i {laz_name} -o {las_name}')
@@ -104,7 +105,6 @@ def main():
     global MERGE_LAS
     global GENERATE_STLS
     global DELETE_LAS
-    global FILTER_SPIKES
     global QGIS_COMPATIBLE_DEM
     global GRID_EXE
 
@@ -119,7 +119,7 @@ def main():
     parser.add_argument('--cleanup', '-c', action='store_true', help='Using this flag will cause the program to automatically delete the unzipped point cloud files after running.')
     parser.add_argument('--filter', '-f', type=float, default=False, help='A percent value (0-100, for the slope of the points being smoothed) that will enable the spike smoothing option.  This is good if you have points that are floating way up above the model and causing spikes in your final model.')
     parser.add_argument('--prj', '-p', action='store_true', help='Using this flag will cause the program to automatically download and use lastools to generate projection files for the elevation models.  This is important if you want to generate the STLs yourself in QGIS, but it means you\'ll have to be mindful of lastool\'s license limitations.  More info on lastool\'s website.')
-    parser.add_argument('--custom_las', action='store_true', default=False, help='Using this flag will use a pre-provided set of las files in the LAS directory.')
+    parser.add_argument('--external_files', '-e', action='store_true', default=False, help='Using this flag will grab las/laz files from the LAS directory instead of downloading them from an input list.')
     #parser.add_argument('--help', '-h', action='help')
 
     args = parser.parse_args()
@@ -135,16 +135,12 @@ def main():
     if args.filter:
         GRID_EXE += f' /spike:{args.filter}'
 
-    # For each tile in the USGS dataset, download the zip
-    f = open(args.input)
-    list_of_urls = []
-    list_of_zip = []
+    if not args.external_files:
+        # For each tile in the USGS dataset, download the zip
+        f = open(args.input)
+        list_of_urls = []
+        list_of_zip = []
 
-    # TODO check if first line is a URL or not
-    if args.custom_las:
-        list_of_las = list(glob.glob('LAS\\*.las'))
-        list_of_files = [x.removesuffix('.las') for x in list_of_las]
-    else:
         for line in f:
             if not line.rstrip('\n').endswith('.zip'):
                 continue
@@ -170,10 +166,11 @@ def main():
 
     if list_of_laz:
         print("LAZ files detected, unzipping...")
-        with multiprocessing.Pool(16) as p:
-            p.starmap(unzip_laz_file, zip(list_of_laz, [x.removesuffix('.laz') + 'las' for x in list_of_las]))
-        list_of_las = list(glob.glob('LAS\\*.las'))
+        with multiprocessing.Pool() as p:
+            p.starmap(unzip_laz_file, zip(list_of_laz, [x.removesuffix('.laz') + '.las' for x in list_of_laz]))
 
+    list_of_las = list(glob.glob('LAS\\*.las'))
+    list_of_files = [os.path.basename(x).removesuffix('.las') for x in list_of_las]
 
     if MERGE_LAS:
         list_of_files = [list_of_files[0]]
@@ -191,7 +188,7 @@ def main():
         os.system(f'{GRID_EXE} {list_of_dtm[0]} {REDUCE_BY} M M 0 0 0 0 LAS\\*.las')
     else:
         with multiprocessing.Pool() as p:
-            p.starmap(generate_dem_from_las, zip(list_of_las, list_of_dtm))
+            p.starmap(generate_dem_from_las, zip(list_of_las, list_of_dtm, [args.filter] * len(list_of_las), [REDUCE_BY] * len(list_of_las)))
 
     if not os.path.exists('ASC'):
         os.mkdir('ASC')
