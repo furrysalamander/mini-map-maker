@@ -36,14 +36,17 @@ DELETE_LAS = False
 # https://lastools.github.io/LICENSE.txt
 QGIS_COMPATIBLE_DEM = False
 
-SCRIPT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, 'frozen', False):
+    APPLICATION_PATH = os.path.dirname(sys.executable)
+elif __file__:
+    APPLICATION_PATH = os.path.dirname(__file__)
 
-GRID_EXE = os.path.join(SCRIPT_DIRECTORY, "GridSurfaceCreate64.exe")
-D2A_EXE = os.path.join(SCRIPT_DIRECTORY, "DTM2ASCII.exe")
-LASZIP_EXE = os.path.join(SCRIPT_DIRECTORY, "laszip-cli.exe")
+GRID_EXE = os.path.join(APPLICATION_PATH, "GridSurfaceCreate64.exe")
+D2A_EXE = os.path.join(APPLICATION_PATH, "DTM2ASCII.exe")
+LASZIP_EXE = os.path.join(APPLICATION_PATH, "laszip-cli.exe")
 LASTOOLS_URL = "http://lastools.github.io/download/LAStools.zip"
-BLAST2DEM_EXE = os.path.join(SCRIPT_DIRECTORY, "LAStools\\bin\\blast2dem.exe")
-LAS2LAS_EXE = os.path.join(SCRIPT_DIRECTORY, "LAStools\\bin\\las2las.exe")
+BLAST2DEM_EXE = os.path.join(APPLICATION_PATH, "LAStools\\bin\\blast2dem.exe")
+LAS2LAS_EXE = os.path.join(APPLICATION_PATH, "LAStools\\bin\\las2las.exe")
 
 # lastools isn't completely free/open source, so we can't distribute it with the program.
 def install_lastools():
